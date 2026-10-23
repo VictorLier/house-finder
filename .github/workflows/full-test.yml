@@ -29,5 +29,5 @@ jobs:
           echo "Peak memory: ${peak} MiB"
           du -sh data
           curl -fsS http://127.0.0.1:8501/_stcore/health
-          curl -fsS -o tile.png -w '%{http_code} %{content_type}\n' http://127.0.0.1:8501/api/tiles/10/544/319.png
+          curl -fsS -o tile.png -w '%{http_code} %{content_type}\n' http://127.0.0.1:8501/api/tiles/10/544/319.png?s=ff00ff-153-1
           file tile.png | grep -q PNG
