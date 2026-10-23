@@ -1,0 +1,21 @@
+# TrueNAS SCALE (24.10+): Apps → Discover Apps → ⋮ → Install via YAML, paste this file.
+# 1. Create a dataset for the data first and replace the path below.
+#    The "apps" user (uid 568) needs write access to it.
+# 2. The first start downloads OpenStreetMap data and builds the map (~5-15 min).
+#    Follow progress in the app's logs. The app needs ~4 GB RAM during that build.
+services:
+  house-finder:
+    image: ghcr.io/victorlier/house-finder:latest
+    pull_policy: always
+    user: "568:568"
+    environment:
+      HOUSE_FINDER_DATA: /data
+      # Set to "1" and redeploy to rebuild the map from fresh OpenStreetMap data,
+      # then set it back to "0".
+      HOUSE_FINDER_REBUILD: "0"
+      TZ: Europe/Copenhagen
+    volumes:
+      - /mnt/POOL/apps/house-finder:/data   # <-- change POOL to your pool name
+    ports:
+      - "8501:8501"
+    restart: unless-stopped

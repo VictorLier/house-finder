@@ -1,0 +1,28 @@
+[project]
+name = "house-finder"
+version = "0.1.0"
+description = "Find Danish areas close to water, harbours, nature and rail stations"
+authors = [
+    { name = "VictorLier", email = "github@lier.dk" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "folium>=0.20.0",
+    "numpy>=2.5.4",
+    "osmium>=4.3.2",
+    "pillow>=13.0.0",
+    "pyproj>=3.8.0",
+    "rasterio>=1.5.2",
+    "scipy>=1.18.1",
+    "shapely>=2.2.0",
+    "streamlit>=1.66.1",
+    "streamlit-folium>=0.27.4",
+]
+
+[project.scripts]
+house-finder = "house_finder:main"
+house-finder-build = "house_finder.pipeline:main"
+
+[build-system]
+requires = ["uv_build>=0.13.3,<0.14.0"]
+build-backend = "uv_build"
