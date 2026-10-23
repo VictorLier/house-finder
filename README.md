@@ -18,10 +18,12 @@ Re-run `uv run house-finder-build --refresh` to fetch the latest OpenStreetMap d
 
 Every push to `main` makes GitHub Actions build, smoke-test and publish the image
 `ghcr.io/victorlier/house-finder:latest` (linux/amd64). There is nothing to build on the server.
+The manual **Full container test** workflow (Actions tab → Run workflow) runs the image like a
+fresh install, including the map-data build, and checks that map tiles are served.
 
 * The map data is **not** in the image. On first start the container downloads the
-  OpenStreetMap extract and builds the grids into the `/data` volume (~5-15 min, ~750 MB disk,
-  a few GB RAM during the build). Later starts reuse it. Follow progress in the container logs.
+  OpenStreetMap extract and builds the grids into the `/data` volume (~3-10 min, ~650 MB disk,
+  ~1.5 GB RAM). Later starts reuse it. Follow progress in the container logs.
 * Set `HOUSE_FINDER_REBUILD=1` and restart to rebuild from fresh OSM data, then set it back to `0`.
 * Runs as uid/gid 568 (TrueNAS `apps` user). The mounted folder must be writable by that user.
 * Port 8501. Health check: `/_stcore/health`.
