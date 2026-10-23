@@ -1,0 +1,33 @@
+name: Full container test
+
+# Manual: runs the published image like a fresh install (downloads OSM data,
+# builds the map) and checks that the app serves map tiles afterwards.
+on:
+  workflow_dispatch:
+
+jobs:
+  first-start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: First start with empty data volume
+        run: |
+          set -eu
+          mkdir data && sudo chown 568:568 data
+          docker run -d --name hf -p 8501:8501 -v "$PWD/data:/data" ghcr.io/victorlier/house-finder:latest
+          peak=0
+          for i in $(seq 1 600); do
+            mem=$(docker stats --no-stream --format '{{.MemUsage}}' hf | awk '{print $1}')
+            echo "$(date +%T) $mem"
+            mib=$(echo "$mem" | awk '/GiB/{printf "%d", $1*1024} /MiB/{printf "%d", $1}')
+            [ "${mib:-0}" -gt "$peak" ] && peak=$mib
+            if curl -fsS http://127.0.0.1:8501/_stcore/health >/dev/null 2>&1; then break; fi
+            if [ "$(docker inspect -f '{{.State.Running}}' hf)" != "true" ]; then docker logs hf; exit 1; fi
+            sleep 5
+          done
+          docker logs hf
+          echo "Peak memory: ${peak} MiB"
+          du -sh data
+          curl -fsS http://127.0.0.1:8501/_stcore/health
+          curl -fsS -o tile.png -w '%{http_code} %{content_type}\n' http://127.0.0.1:8501/api/tiles/10/544/319.png
+          file tile.png | grep -q PNG
