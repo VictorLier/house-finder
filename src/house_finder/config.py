@@ -43,3 +43,11 @@ STATION_TYPES = {
     "metro": "Metro",
     "light_rail": "Light rail (letbane)",
 }
+
+INSTITUTION_TYPES = {
+    "school": "Schools",
+    "daycare": "Daycare & kindergartens",
+    "higher_education": "Colleges & universities",
+    "healthcare": "Healthcare facilities",
+    "library": "Libraries",
+}

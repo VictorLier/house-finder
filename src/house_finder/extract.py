@@ -21,10 +21,11 @@ _TO_MERC = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
 
 AREA_KEYS = (
     "natural", "landuse", "leisure", "boundary", "harbour", "seamark:type",
-    "industrial", "railway", "public_transport",
+    "industrial", "railway", "public_transport", "shop", "amenity", "healthcare",
+    "social_facility",
 )
 NODE_KEYS = ("natural", "leisure", "harbour", "seamark:type", "industrial", "railway",
-             "landuse")
+             "landuse", "shop", "amenity", "healthcare", "social_facility")
 
 LAKE_WATER_VALUES = {None, "lake", "reservoir", "lagoon", "oxbow"}
 HARBOUR_TAGS = (
@@ -42,6 +43,27 @@ def _to_merc(geom):
 
 def _is_harbour(tags) -> bool:
     return any(tags.get(k) == v for k, v in HARBOUR_TAGS)
+
+
+def _poi_type(tags) -> str | None:
+    """Map grocery shops and institutions to their distance-grid layer names."""
+    if tags.get("shop") in {"supermarket", "convenience", "grocery", "food", "greengrocer",
+                            "deli"}:
+        return "grocery"
+
+    amenity = tags.get("amenity")
+    if amenity == "school":
+        return "institution_school"
+    if amenity in ("kindergarten", "childcare") or tags.get("social_facility") == "day_care":
+        return "institution_daycare"
+    if amenity in ("college", "university"):
+        return "institution_higher_education"
+    if amenity in ("hospital", "clinic", "doctors", "dentist", "pharmacy") \
+            or tags.get("healthcare") not in (None, "", "no"):
+        return "institution_healthcare"
+    if amenity == "library":
+        return "institution_library"
+    return None
 
 
 def _station_kind(tags) -> str | None:
@@ -177,6 +199,9 @@ def extract(pbf_path=config.PBF_PATH):
                 if obj.id in route_members:
                     member_xy.append(_TO_MERC.transform(obj.location.lon, obj.location.lat))
                     member_labels.append(route_members[obj.id])
+                poi = _poi_type(tags)
+                if poi:
+                    points[poi].append((wkb.create_point(obj), tags.get("name", "")))
                 kind = _station_kind(tags)
                 if kind:
                     stations.append((wkb.create_point(obj), tags.get("name", ""), kind))
@@ -204,6 +229,10 @@ def extract(pbf_path=config.PBF_PATH):
                 if _is_harbour(tags):
                     geom = geom or wkb.create_multipolygon(obj)
                     areas["harbour"].append(geom)
+                poi = _poi_type(tags)
+                if poi:
+                    geom = geom or wkb.create_multipolygon(obj)
+                    areas[poi].append(geom)
                 kind = _station_kind(tags)
                 if kind:
                     geom = geom or wkb.create_multipolygon(obj)

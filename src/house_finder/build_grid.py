@@ -186,6 +186,15 @@ def build(features_path=config.FEATURES_PATH):
         [(g.representative_point(), "") for g in feat["areas"].get("harbour", [])],
     )
 
+    poi_layers = ("grocery", *(f"institution_{kind}" for kind in config.INSTITUTION_TYPES))
+    for name in poi_layers:
+        target = grid.rasterize(
+            feat["areas"].get(name, []) +
+            [g for g, _ in feat["points"].get(name, [])]
+        ) & territory
+        layers[name] = grid.distance(target)
+        log(name.replace("_", " "))
+
     config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     save_grid(grid, land_dk, layers)
     with open(config.POINTS_PATH, "w", encoding="utf-8") as f:

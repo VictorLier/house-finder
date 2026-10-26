@@ -21,8 +21,9 @@ st.set_page_config(page_title="House Finder Denmark", page_icon=":material/home:
 
 if not data_ready():
     st.error(
-        "Map data has not been built yet. Run `uv run house-finder-build` in the project "
-        "folder (downloads ~500 MB of OpenStreetMap data and takes a few minutes), "
+        "Map data has not been built yet or needs rebuilding for the current criteria. "
+        "Run `uv run house-finder-build` in the project folder (downloads ~500 MB of "
+        "OpenStreetMap data if it is not already present, then takes a few minutes), "
         "then reload this page."
     )
     st.stop()
@@ -91,6 +92,28 @@ if sb.checkbox("Near a rail station", value=True):
                          station_km * 1000))
     else:
         sb.warning("Select at least one station type, or untick 'Near a rail station'.")
+
+sb.subheader("Grocery shopping")
+if sb.checkbox("Near a grocery store", value=False):
+    grocery_km = sb.slider("Max distance to grocery shopping (km)", 0.1, 20.0, 2.0, 0.1)
+    criteria.append(("Grocery shopping", ("grocery",), grocery_km * 1000))
+
+sb.subheader("Institutions")
+if sb.checkbox("Near an institution", value=False):
+    institution_types = sb.multiselect(
+        "Institution types", list(config.INSTITUTION_TYPES),
+        default=list(config.INSTITUTION_TYPES),
+        format_func=config.INSTITUTION_TYPES.get,
+    )
+    institution_km = sb.slider("Max distance to institution (km)", 0.1, 30.0, 2.0, 0.1)
+    if institution_types:
+        criteria.append((
+            "Institution",
+            tuple(f"institution_{kind}" for kind in institution_types),
+            institution_km * 1000,
+        ))
+    else:
+        sb.warning("Select at least one institution type, or untick 'Near an institution'.")
 
 sb.subheader("Houses for sale")
 house_data = houses.load_houses()
@@ -278,8 +301,10 @@ LAYER_LABELS = {
     "coast": "Coast / sea",
     **{f"lake_{ha}": f"Lake ≥ {ha} ha" for ha in config.LAKE_MIN_AREAS_HA},
     "harbour": "Harbour / marina",
+    "grocery": "Grocery shopping",
     **{f"nature_{k}": v for k, v in config.NATURE_TYPES.items()},
     **{f"station_{k}": f"Station: {v}" for k, v in config.STATION_TYPES.items()},
+    **{f"institution_{k}": f"Institution: {v}" for k, v in config.INSTITUTION_TYPES.items()},
 }
 
 
