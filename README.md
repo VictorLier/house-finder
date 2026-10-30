@@ -2,7 +2,9 @@
 
 Interactive map that highlights areas of Denmark close to **water** (coast and larger lakes),
 **harbours/marinas**, **nature** (woods, heath, nature reserves/national parks, parks, beaches) and
-**rail stations** (train incl. S-tog and local trains, Metro, letbane).
+**rail stations** (train incl. S-tog and local trains, Metro, letbane). Optional criteria include
+**grocery stores** and **institutions** (schools, daycare/kindergartens, colleges/universities,
+healthcare facilities and libraries).
 
 ## Quick start (uv)
 
@@ -62,7 +64,7 @@ Plain Docker: `docker run -d -p 8501:8501 -v house-finder-data:/data ghcr.io/vic
 | Step | File | What it does |
 |------|------|--------------|
 | Download | `pipeline.py` | Fetches `denmark-latest.osm.pbf` from Geofabrik |
-| Extract | `extract.py` | Reads OSM with pyosmium and collects coastline, lakes, nature, harbours and stations |
+| Extract | `extract.py` | Reads OSM with pyosmium and collects coastline, lakes, nature, harbours, stations, grocery stores and institutions |
 | Grid | `build_grid.py` | Rasterizes to a ~90 m grid (Web Mercator), builds a land/sea mask from the coastline and computes straight-line distance grids |
 | Grid storage | `data.py` | Grids saved as memory-mapped `.npy` files in `data/processed/grid/` (~700 MB) |
 | Map tiles | `tiles.py`, `asgi.py` | Serves the highlight as map tiles at `/api/tiles/{z}/{x}/{y}.png` via `st.App`. Zoomed in, distances are interpolated per screen pixel (smooth, sharp edges); zoomed out, any matching cell is shown so small areas stay visible |
@@ -79,6 +81,11 @@ Notes and definitions:
 * Only features inside Danish territory count (e.g. Swedish stations are ignored).
 * Lakes: `natural=water` lakes/reservoirs; minimum size selectable (5, 20 or 100 ha).
 * Harbours: marinas, `harbour=yes`, `landuse=harbour`, seamark harbours and ports.
+* Grocery shopping: supermarkets, convenience stores, grocery/food shops, greengrocers and delis.
+* Institutions: schools; daycare/kindergartens; colleges/universities; healthcare facilities;
+  libraries. Grocery and institution criteria are optional and initially disabled.
+* After updating from a version without these criteria, run `uv run house-finder-build` once to
+  rebuild the cached map layers.
 * S-tog and letbane share the same tags in Danish OSM; stations are told apart using the
   rail route relations (letbane = Aarhus Letbane, Odense Letbane, Hovedstadens Letbane).
 

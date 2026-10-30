@@ -22,7 +22,18 @@ Criteria = tuple[Criterion, ...]
 
 
 def data_ready() -> bool:
-    return (config.GRID_DIR / "meta.json").exists() and config.POINTS_PATH.exists()
+    meta_path = config.GRID_DIR / "meta.json"
+    if not meta_path.exists() or not config.POINTS_PATH.exists():
+        return False
+    layers = set(json.loads(meta_path.read_text(encoding="utf-8")).get("layers", []))
+    required = {
+        "coast", "harbour", "grocery",
+        *(f"lake_{ha}" for ha in config.LAKE_MIN_AREAS_HA),
+        *(f"nature_{kind}" for kind in config.NATURE_TYPES),
+        *(f"station_{kind}" for kind in config.STATION_TYPES),
+        *(f"institution_{kind}" for kind in config.INSTITUTION_TYPES),
+    }
+    return required <= layers
 
 
 class GridData:
